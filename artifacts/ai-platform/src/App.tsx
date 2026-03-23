@@ -12,6 +12,7 @@ import ProjectDetail from "@/pages/projects/detail";
 import TaskChat from "@/pages/tasks/chat";
 import OrchestratorPage from "@/pages/orchestrator/index";
 import SettingsPage from "@/pages/settings/index";
+import McpMarketplacePage from "@/pages/mcp/index";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/projects/:projectId/tasks/:taskId" component={TaskChat} />
       <Route path="/orchestrator" component={OrchestratorPage} />
       <Route path="/settings" component={SettingsPage} />
+      <Route path="/mcp" component={McpMarketplacePage} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -3,122 +3,93 @@ import { db } from "@workspace/db";
 import { tasksTable, messagesTable, agentsTable, contextTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { asyncHandler, Errors } from "../lib/error-handler.js";
+import { logger } from "../lib/logger.js";
 
 const router: IRouter = Router();
 const DEFAULT_ENDPOINT = "http://localhost:11434";
 
-router.post("/tasks", (req: Request, res: Response) => {
-  try {
-    const { projectId, agentId, title, description, model, ollamaEndpoint } = req.body as {
-      projectId: string;
-      agentId?: string;
-      title: string;
-      description?: string;
-      model?: string;
-      ollamaEndpoint?: string;
-    };
+router.post("/tasks", asyncHandler(async (req, res) => {
+  const { projectId, agentId, title, description, model, ollamaEndpoint } = req.body as {
+    projectId: string;
+    agentId?: string;
+    title: string;
+    description?: string;
+    model?: string;
+    ollamaEndpoint?: string;
+  };
 
-    if (!projectId || !title) {
-      res.status(400).json({ error: "validation_error", message: "projectId and title are required" });
-      return;
-    }
-
-    const now = new Date().toISOString();
-    const task = {
-      id: randomUUID(),
-      projectId,
-      agentId: agentId || null,
-      title,
-      description: description || null,
-      status: "pending",
-      result: null,
-      model: model || "glm-5:cloud",
-      ollamaEndpoint: ollamaEndpoint || DEFAULT_ENDPOINT,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    db.insert(tasksTable).values(task).run();
-    res.status(201).json(task);
-  } catch (err) {
-    res.status(500).json({ error: "internal_error", message: String(err) });
+  if (!projectId || !title) {
+    throw Errors.validation("projectId and title are required");
   }
-});
 
-router.get("/tasks/:id", (req: Request, res: Response) => {
-  try {
-    const id = req.params.id as string;
-    const task = db.select().from(tasksTable).where(eq(tasksTable.id, id)).get();
-    if (!task) {
-      res.status(404).json({ error: "not_found", message: "Task not found" });
-      return;
-    }
-    res.json(task);
-  } catch (err) {
-    res.status(500).json({ error: "internal_error", message: String(err) });
-  }
-});
+  const now = new Date().toISOString();
+  const task = {
+    id: randomUUID(),
+    projectId,
+    agentId: agentId || null,
+    title,
+    description: description || null,
+    status: "pending",
+    result: null,
+    model: model || "glm-5:cloud",
+    ollamaEndpoint: ollamaEndpoint || DEFAULT_ENDPOINT,
+    createdAt: now,
+    updatedAt: now,
+  };
 
-router.get("/tasks/:id/messages", (req: Request, res: Response) => {
-  try {
-    const id = req.params.id as string;
-    const messages = db.select().from(messagesTable).where(eq(messagesTable.taskId, id)).all();
-    res.json({ messages });
-  } catch (err) {
-    res.status(500).json({ error: "internal_error", message: String(err) });
-  }
-});
+  db.insert(tasksTable).values(task).run();
+  res.status(201).json(task);
+}));
 
-router.delete("/tasks/:id", (req: Request, res: Response) => {
-  try {
-    const id = req.params.id as string;
-    const task = db.select().from(tasksTable).where(eq(tasksTable.id, id)).get();
-    if (!task) {
-      res.status(404).json({ error: "not_found", message: "Task not found" });
-      return;
-    }
-    
-    // Cleanup related data
-    db.delete(contextTable).where(eq(contextTable.key, `task:${task.id}:result`)).run();
-    db.delete(messagesTable).where(eq(messagesTable.taskId, task.id)).run();
-    db.delete(tasksTable).where(eq(tasksTable.id, task.id)).run();
-    
-    res.json({ success: true, message: "Task deleted" });
-  } catch (err) {
-    res.status(500).json({ error: "internal_error", message: String(err) });
-  }
-});
+router.get("/tasks/:id", asyncHandler(async (req, res) => {
+  const id = req.params.id as string;
+  const task = db.select().from(tasksTable).where(eq(tasksTable.id, id)).get();
+  if (!task) throw Errors.notFound("Task", id);
+  res.json(task);
+}));
 
-router.patch("/tasks/:id", (req: Request, res: Response) => {
-  try {
-    const id = req.params.id as string;
-    const task = db.select().from(tasksTable).where(eq(tasksTable.id, id)).get();
-    if (!task) {
-      res.status(404).json({ error: "not_found", message: "Task not found" });
-      return;
-    }
-    
-    if (task.status === "running") {
-      res.status(400).json({ error: "validation_error", message: "Cannot edit a running task" });
-      return;
-    }
-    
-    const { title, model } = req.body as { title?: string; model?: string };
-    const updates: Record<string, string> = { updatedAt: new Date().toISOString() };
-    if (title !== undefined) updates.title = title;
-    if (model !== undefined) updates.model = model;
-    
-    db.update(tasksTable)
-      .set(updates)
-      .where(eq(tasksTable.id, task.id))
-      .run();
-      
-    const updatedTask = db.select().from(tasksTable).where(eq(tasksTable.id, task.id)).get();
-    res.json(updatedTask);
-  } catch (err) {
-    res.status(500).json({ error: "internal_error", message: String(err) });
+router.get("/tasks/:id/messages", asyncHandler(async (req, res) => {
+  const id = req.params.id as string;
+  const messages = db.select().from(messagesTable).where(eq(messagesTable.taskId, id)).all();
+  res.json({ messages });
+}));
+
+router.delete("/tasks/:id", asyncHandler(async (req, res) => {
+  const id = req.params.id as string;
+  const task = db.select().from(tasksTable).where(eq(tasksTable.id, id)).get();
+  if (!task) throw Errors.notFound("Task", id);
+  
+  // Cleanup related data (CASCADE handles this too but explicit is safer)
+  db.delete(contextTable).where(eq(contextTable.key, `task:${task.id}:result`)).run();
+  db.delete(messagesTable).where(eq(messagesTable.taskId, task.id)).run();
+  db.delete(tasksTable).where(eq(tasksTable.id, task.id)).run();
+  
+  res.json({ success: true, message: "Task deleted" });
+}));
+
+router.patch("/tasks/:id", asyncHandler(async (req, res) => {
+  const id = req.params.id as string;
+  const task = db.select().from(tasksTable).where(eq(tasksTable.id, id)).get();
+  if (!task) throw Errors.notFound("Task", id);
+  
+  if (task.status === "running") {
+    throw Errors.conflict("Cannot edit a running task");
   }
-});
+  
+  const { title, model } = req.body as { title?: string; model?: string };
+  const updates: Record<string, string> = { updatedAt: new Date().toISOString() };
+  if (title !== undefined) updates.title = title;
+  if (model !== undefined) updates.model = model;
+  
+  db.update(tasksTable)
+    .set(updates)
+    .where(eq(tasksTable.id, task.id))
+    .run();
+    
+  const updatedTask = db.select().from(tasksTable).where(eq(tasksTable.id, task.id)).get();
+  res.json(updatedTask);
+}));
 
 router.post("/tasks/:id/run", async (req: Request, res: Response) => {
   const {

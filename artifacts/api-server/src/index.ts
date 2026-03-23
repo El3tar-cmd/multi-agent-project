@@ -1,5 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { realtimeManager } from "./lib/realtime";
 
 const rawPort = process.env["PORT"];
 
@@ -17,6 +18,10 @@ if (Number.isNaN(port) || port <= 0) {
 
 const server = app.listen(port, () => {
   logger.info({ port }, "Server listening");
+  
+  // Attach WebSocket server for real-time updates
+  realtimeManager.attach(server);
+  logger.info("WebSocket real-time feed available at /ws");
 });
 
 server.on("error", (err) => {

@@ -1,10 +1,11 @@
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { projectsTable } from "./projects";
 
 export const contextTable = sqliteTable("context", {
   id: text("id").primaryKey(),
-  projectId: text("project_id").notNull(),
+  projectId: text("project_id").notNull().references(() => projectsTable.id, { onDelete: "cascade" }),
   key: text("key").notNull(),
   value: text("value").notNull(),
   source: text("source"),

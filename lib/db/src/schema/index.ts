@@ -3,3 +3,7 @@ export * from "./projects";
 export * from "./tasks";
 export * from "./messages";
 export * from "./context";
+export * from "./artifacts";
+export * from "./mcp-servers";
+export * from "./collaborations";
+export * from "./embeddings";
