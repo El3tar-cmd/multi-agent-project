@@ -1,0 +1,809 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: AI Platform Builder API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: agents
+    description: Agent management
+  - name: projects
+    description: Project management
+  - name: tasks
+    description: Task execution
+  - name: messages
+    description: Conversation messages
+  - name: context
+    description: Context management
+  - name: ollama
+    description: Ollama LLM integration
+  - name: orchestrator
+    description: Orchestrator - routes tasks to the right agent
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /agents:
+    get:
+      operationId: listAgents
+      tags: [agents]
+      summary: List all agents
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentListResponse"
+
+  /agents/reload:
+    post:
+      operationId: reloadAgents
+      tags: [agents]
+      summary: Reload agents from markdown files
+      responses:
+        "200":
+          description: Reload result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReloadAgentsResponse"
+
+  /agents/{id}:
+    get:
+      operationId: getAgent
+      tags: [agents]
+      summary: Get agent by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Agent details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Agent"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: List all projects
+      responses:
+        "200":
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectListResponse"
+    post:
+      operationId: createProject
+      tags: [projects]
+      summary: Create a new project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProjectRequest"
+      responses:
+        "201":
+          description: Created project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+
+  /projects/{id}:
+    get:
+      operationId: getProject
+      tags: [projects]
+      summary: Get project by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteProject
+      tags: [projects]
+      summary: Delete a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+    patch:
+      operationId: updateProject
+      tags: [projects]
+      summary: Update project name and description
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProjectRequest"
+      responses:
+        "200":
+          description: Updated project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+
+  /projects/{id}/tasks:
+    get:
+      operationId: listProjectTasks
+      tags: [tasks]
+      summary: List tasks for a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskListResponse"
+
+  /projects/{id}/context:
+    get:
+      operationId: getProjectContext
+      tags: [context]
+      summary: Get context entries for a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Context entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContextListResponse"
+
+  /tasks:
+    post:
+      operationId: createTask
+      tags: [tasks]
+      summary: Create and run a task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTaskRequest"
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
+  /tasks/{id}:
+    get:
+      operationId: getTask
+      tags: [tasks]
+      summary: Get task details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Task details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+    patch:
+      operationId: updateTask
+      tags: [tasks]
+      summary: Update task title and model
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTaskRequest"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+    delete:
+      operationId: deleteTask
+      tags: [tasks]
+      summary: Delete a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /tasks/{id}/messages:
+    get:
+      operationId: getTaskMessages
+      tags: [messages]
+      summary: Get messages for a task
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageListResponse"
+
+  /tasks/{id}/run:
+    post:
+      operationId: runTask
+      tags: [tasks]
+      summary: Execute a task with an agent via Ollama (SSE streaming)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RunTaskRequest"
+      responses:
+        "200":
+          description: Streaming SSE response with thinking and output
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /orchestrator/suggest:
+    post:
+      operationId: suggestAgent
+      tags: [orchestrator]
+      summary: Suggest the best agent for a task description
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SuggestAgentRequest"
+      responses:
+        "200":
+          description: Suggested agent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuggestAgentResponse"
+
+  /orchestrator/plan:
+    post:
+      operationId: planProject
+      tags: [orchestrator]
+      summary: Use AI to break down a project idea into tasks with agents and prompts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlanProjectRequest"
+      responses:
+        "200":
+          description: Structured project plan
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlanProjectResponse"
+
+  /ollama/models:
+    get:
+      operationId: listOllamaModels
+      tags: [ollama]
+      summary: List available Ollama models
+      parameters:
+        - name: endpoint
+          in: query
+          schema:
+            type: string
+            default: "http://localhost:11434"
+      responses:
+        "200":
+          description: Available models
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OllamaModelsResponse"
+
+  /ollama/status:
+    get:
+      operationId: getOllamaStatus
+      tags: [ollama]
+      summary: Check Ollama connection status
+      parameters:
+        - name: endpoint
+          in: query
+          schema:
+            type: string
+            default: "http://localhost:11434"
+      responses:
+        "200":
+          description: Status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OllamaStatusResponse"
+
+  /ollama/chat:
+    post:
+      operationId: ollamaChat
+      tags: [ollama]
+      summary: Direct chat with Ollama model (SSE streaming with thinking)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OllamaChatRequest"
+      responses:
+        "200":
+          description: Streaming SSE
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required: [error]
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required: [success]
+
+    Agent:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+        emoji:
+          type: string
+        vibe:
+          type: string
+        systemPrompt:
+          type: string
+        filePath:
+          type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+      required: [id, name, category, description, systemPrompt, filePath, isActive, createdAt]
+
+    AgentListResponse:
+      type: object
+      properties:
+        agents:
+          type: array
+          items:
+            $ref: "#/components/schemas/Agent"
+        total:
+          type: integer
+        categories:
+          type: array
+          items:
+            type: string
+      required: [agents, total, categories]
+
+    ReloadAgentsResponse:
+      type: object
+      properties:
+        loaded:
+          type: integer
+        message:
+          type: string
+      required: [loaded, message]
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, name, status, createdAt, updatedAt]
+
+    ProjectListResponse:
+      type: object
+      properties:
+        projects:
+          type: array
+          items:
+            $ref: "#/components/schemas/Project"
+      required: [projects]
+
+    CreateProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+      required: [name]
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+        projectId:
+          type: string
+        agentId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        result:
+          type: string
+        model:
+          type: string
+        ollamaEndpoint:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required: [id, projectId, title, status, createdAt, updatedAt]
+
+    TaskListResponse:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+      required: [tasks]
+
+    UpdateProjectRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    CreateTaskRequest:
+      type: object
+      properties:
+        projectId:
+          type: string
+        agentId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        model:
+          type: string
+        ollamaEndpoint:
+          type: string
+      required: [projectId, title]
+
+    UpdateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        model:
+          type: string
+
+    RunTaskRequest:
+      type: object
+      properties:
+        message:
+          type: string
+        model:
+          type: string
+        ollamaEndpoint:
+          type: string
+        enableThinking:
+          type: boolean
+      required: [message]
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+        taskId:
+          type: string
+        agentId:
+          type: string
+        role:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+      required: [id, taskId, role, content, createdAt]
+
+    MessageListResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+      required: [messages]
+
+    ContextEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        projectId:
+          type: string
+        key:
+          type: string
+        value:
+          type: string
+        source:
+          type: string
+        createdAt:
+          type: string
+      required: [id, projectId, key, value, createdAt]
+
+    ContextListResponse:
+      type: object
+      properties:
+        context:
+          type: array
+          items:
+            $ref: "#/components/schemas/ContextEntry"
+      required: [context]
+
+    SuggestAgentRequest:
+      type: object
+      properties:
+        task:
+          type: string
+        projectId:
+          type: string
+      required: [task]
+
+    SuggestAgentResponse:
+      type: object
+      properties:
+        agent:
+          $ref: "#/components/schemas/Agent"
+        reason:
+          type: string
+        alternatives:
+          type: array
+          items:
+            $ref: "#/components/schemas/Agent"
+      required: [agent, reason, alternatives]
+
+    PlanProjectRequest:
+      type: object
+      properties:
+        prompt:
+          type: string
+        model:
+          type: string
+      required: [prompt, model]
+
+    PlanProjectResponse:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlanTask"
+      required: [tasks]
+
+    PlanTask:
+      type: object
+      properties:
+        title:
+          type: string
+        agentId:
+          type: string
+        agentName:
+          type: string
+        prompt:
+          type: string
+        reason:
+          type: string
+      required: [title, agentId, agentName, prompt, reason]
+
+    OllamaModel:
+      type: object
+      properties:
+        name:
+          type: string
+        size:
+          type: integer
+        modifiedAt:
+          type: string
+      required: [name, size, modifiedAt]
+
+    OllamaModelsResponse:
+      type: object
+      properties:
+        models:
+          type: array
+          items:
+            $ref: "#/components/schemas/OllamaModel"
+        endpoint:
+          type: string
+      required: [models, endpoint]
+
+    OllamaStatusResponse:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        endpoint:
+          type: string
+        version:
+          type: string
+        message:
+          type: string
+      required: [connected, endpoint]
+
+    OllamaChatRequest:
+      type: object
+      properties:
+        model:
+          type: string
+        messages:
+          type: array
+          items:
+            type: object
+            properties:
+              role:
+                type: string
+              content:
+                type: string
+            required: [role, content]
+        systemPrompt:
+          type: string
+        enableThinking:
+          type: boolean
+        ollamaEndpoint:
+          type: string
+      required: [model, messages]

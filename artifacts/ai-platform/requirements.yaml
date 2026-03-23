@@ -1,0 +1,20 @@
+packages:
+  "framer-motion": "For fluid, stunning animations in the thinking panel and page transitions"
+  "react-markdown": "For rendering markdown content in the chat interface"
+  "remark-gfm": "For GitHub flavored markdown support (tables, lists) in chat"
+  "clsx": "Utility for conditionally joining classNames"
+  "tailwind-merge": "Utility for merging tailwind classes without style conflicts"
+  "date-fns": "For formatting timestamps professionally"
+
+images:
+  - path: "artifacts/ai-platform/public/images/hacker-bg.png"
+    description: "Deep dark tech abstract background, matrix style digital rain meets modern glassmorphism, subtle emerald and cyan glowing elements, professional clean dark mode"
+    aspect_ratio: "16:9"
+  - path: "artifacts/ai-platform/public/images/brain-core.png"
+    description: "Abstract digital artificial intelligence brain core, glowing cyan lines, dark sleek futuristic design"
+    aspect_ratio: "1:1"
+
+notes:
+  - "The API client is available via @workspace/api-client-react"
+  - "The API returns SSE for POST /api/tasks/:id/run with chunk formats requiring fetch-based custom parsing (since EventSource doesn't support POST with body)."
+  - "The visual style is dark mode professional with hacker/terminal accents."

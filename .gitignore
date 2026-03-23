@@ -1,0 +1,60 @@
+# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# dependencies
+node_modules/
+**/node_modules/
+pnpm-lock.yaml
+
+# compiled output
+dist/
+**/dist/
+tmp/
+out-tsc/
+*.tsbuildinfo
+.expo/
+.expo-shared/
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+.sass-cache/
+connect.lock
+coverage/
+libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+typings/
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Replit
+.cache/
+.local/
+
+# Archives and Large Files
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+AI-Orchestrator.zip
+multi-agent-platform-v1.0.rar
+
+# Local data and logs
+*.log
+run.txt

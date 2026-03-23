@@ -1,0 +1,119 @@
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&family=Inter:wght@300..800&family=Space+Grotesk:wght@400..700&display=swap');
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: 'Inter', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-mono: 'Fira Code', monospace;
+
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --animate-pulse-fast: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+:root {
+  /* Dark hacker professional aesthetic */
+  --background: 240 10% 4%;
+  --foreground: 0 0% 95%;
+  
+  --card: 240 10% 6%;
+  --card-foreground: 0 0% 95%;
+  
+  --popover: 240 10% 6%;
+  --popover-foreground: 0 0% 95%;
+  
+  /* Primary: Neon Emerald / Cyan mix */
+  --primary: 158 84% 39%;
+  --primary-foreground: 0 0% 100%;
+  
+  --secondary: 240 6% 15%;
+  --secondary-foreground: 0 0% 98%;
+  
+  --muted: 240 6% 12%;
+  --muted-foreground: 240 5% 65%;
+  
+  /* Accent: Subtle glowy cyan */
+  --accent: 190 90% 40%;
+  --accent-foreground: 0 0% 98%;
+  
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  
+  --border: 240 6% 15%;
+  --input: 240 6% 15%;
+  --ring: 158 84% 39%;
+  
+  --radius: 0.75rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/30 selection:text-primary-foreground;
+    background-image: 
+      radial-gradient(circle at 50% 0%, hsla(158, 84%, 39%, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 100% 100%, hsla(190, 90%, 40%, 0.03) 0%, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
+  
+  code, pre {
+    @apply font-mono;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-card/60 backdrop-blur-xl border border-white/5 shadow-2xl;
+  }
+  
+  .glow-primary {
+    box-shadow: 0 0 20px hsla(var(--primary), 0.2);
+  }
+  
+  .glow-primary-strong {
+    box-shadow: 0 0 30px hsla(var(--primary), 0.4);
+  }
+
+  .text-glow {
+    text-shadow: 0 0 10px hsla(var(--primary), 0.5);
+  }
+
+  /* Custom scrollbar for hacker vibe */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full border-2 border-background;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground;
+  }
+}
