@@ -54,6 +54,7 @@ export async function loadAgentsFromDisk(): Promise<number> {
   }
 
   let count = 0;
+  const loadedIds = new Set<string>();
   const categories = readdirSync(agentsRoot).filter((f) => {
     try {
       return statSync(join(agentsRoot, f)).isDirectory();
@@ -66,7 +67,9 @@ export async function loadAgentsFromDisk(): Promise<number> {
     const categoryDir = join(agentsRoot, category);
     let files: string[] = [];
     try {
-      files = readdirSync(categoryDir).filter((f) => f.endsWith(".md"));
+      files = readdirSync(categoryDir).filter(
+        (f) => f.endsWith(".md") && f.toLowerCase() !== "readme.md",
+      );
     } catch {
       continue;
     }
@@ -83,6 +86,7 @@ export async function loadAgentsFromDisk(): Promise<number> {
       const { frontmatter, body } = parseFrontmatter(content);
       const name = frontmatter.name || file.replace(".md", "").replace(/-/g, " ");
       const id = slugify(`${category}-${file.replace(".md", "")}`);
+      loadedIds.add(id);
 
       try {
         const existing = db.select().from(agentsTable).where(eq(agentsTable.id, id)).get();
@@ -110,6 +114,7 @@ export async function loadAgentsFromDisk(): Promise<number> {
               emoji: agentData.emoji,
               vibe: agentData.vibe,
               systemPrompt: agentData.systemPrompt,
+              isActive: true,
             })
             .where(eq(agentsTable.id, id))
             .run();
@@ -120,6 +125,13 @@ export async function loadAgentsFromDisk(): Promise<number> {
       } catch {
         // skip on error
       }
+    }
+  }
+
+  const existingAgents = db.select({ id: agentsTable.id }).from(agentsTable).all();
+  for (const agent of existingAgents) {
+    if (!loadedIds.has(agent.id)) {
+      db.update(agentsTable).set({ isActive: false }).where(eq(agentsTable.id, agent.id)).run();
     }
   }
 
