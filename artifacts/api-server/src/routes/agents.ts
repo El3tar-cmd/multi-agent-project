@@ -10,7 +10,7 @@ const router: IRouter = Router();
 router.get("/agents", asyncHandler(async (req, res) => {
   const { category, search } = req.query as { category?: string; search?: string };
 
-  let agents = db.select().from(agentsTable).all();
+  let agents = db.select().from(agentsTable).all().filter((a) => a.isActive);
 
   if (category) {
     agents = agents.filter((a) => a.category === category);
@@ -44,4 +44,3 @@ router.get("/agents/:id", asyncHandler(async (req, res) => {
 }));
 
 export default router;
-
